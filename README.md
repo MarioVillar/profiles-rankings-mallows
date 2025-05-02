@@ -1,5 +1,7 @@
 # Profiles of rankings by the Mallows model
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15315407.svg)](https://doi.org/10.5281/zenodo.15315407)
+
 This repository contains the code used to generate the dataset .
 
 This dataset contains profiles of rankings sampled using the Mallows model (Mallows, 1957), through the Repeated Insertion Model (Doignon et al, 2004). Profiles with different characteristics are included. For every combination of the following parameters, there are 1000 profiles:
@@ -22,7 +24,17 @@ Since there is a lack of agreement in the literature regarding the notation of t
 | `ranking`      | list[int] | Sampled ranking. Can be interpreted as the permutation associated to the ranking or the image of this permutation.                                    |
 | `votes`        | int       | Number of votes of the ranking in the profile                                                                                                         |
 
-If you use this dataset, please cite the Zenodo entry.
+If you use this dataset, please cite the Zenodo entry:
+
+```bibtex
+@misc{apellido2025dataset,
+  author    = {Mario Villar and Noelia Rico and Irene Díaz},
+  title     = {Profiles of rankings by the Mallows model},
+  year      = {2025},
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.15315407},
+}
+```
 
 # Acknowledgements
 
