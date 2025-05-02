@@ -23,3 +23,7 @@ Since there is a lack of agreement in the literature regarding the notation of t
 | `votes`        | int       | Number of votes of the ranking in the profile                                                                                                         |
 
 If you use this dataset, please cite the Zenodo entry.
+
+# Acknowledgements
+
+This research has been funded by the Government of Spain through project MCINN-23-PID2022-139886NB-I00 and by grant Project PAPI-24-TESIS-14 of the University of Oviedo.
