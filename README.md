@@ -27,12 +27,14 @@ Since there is a lack of agreement in the literature regarding the notation of t
 If you use this dataset, please cite the Zenodo entry:
 
 ```bibtex
-@misc{apellido2025dataset,
-  author    = {Mario Villar and Noelia Rico and Irene Díaz},
+@dataset{mario_villar_2025_15315407,
+  author    = {Mario Villar and Rico, Noelia and Díaz, Irene},
   title     = {Profiles of rankings by the Mallows model},
-  year      = {2025},
+  month     = may,
+  year      = 2025,
   publisher = {Zenodo},
   doi       = {10.5281/zenodo.15315407},
+  url       = {https://doi.org/10.5281/zenodo.15315407},
 }
 ```
 
