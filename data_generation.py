@@ -38,7 +38,9 @@ def get_mallows_data_partitioning() -> pa.Schema:
     :return: Partitioning schema for the Mallows database.
     :rtype: pa.Schema
     """
-    return HivePartitioning(pa.schema([("phi", pa.float64()), ("n_a", pa.int64())]))
+    return HivePartitioning(
+        pa.schema([("norm_mallows", pa.bool_()), ("phi", pa.float64()), ("n_a", pa.int64()), ("n_v", pa.int64())])
+    )
 
 
 def get_n_a_dtype(n_a: int, unsigned: bool = True) -> type:
@@ -222,67 +224,63 @@ def mallows_exp(
     phi_dec_prec = 10 ** max_decimal_digits(phi_list)
     phi_dec_prec_n_a = phi_dec_prec + 1
 
-    def joblib_mallows_exp(phi: float, n_a: int):
+    def joblib_mallows_exp(norm_mallows: bool, phi: float, n_a: int, n_v: int):
         # Set seed for reproducibility
         np.random.seed(seed=0 if fix_same_seed else int(n_a * phi_dec_prec_n_a + phi_dec_prec * phi))
 
         if verbose > 1:
             print(f"Starting with Mallows dataset for phi={phi}, n_a={n_a}.\n")
 
-        # Generates two Mallows datasets for each value of phi, each value of n_a and each value of n_v:
-        # - One with the original phi value
-        # - One with the normalized phi value
-        for norm_mallows in [False, True]:
-            pa_ranking_list = []
-            pa_votes_list = []
-            pa_profile_idx_list = []
-            pa_phi_list = []
-            pa_n_a_list = []
-            pa_n_v_list = []
-            pa_norm_mallows_list = []
+        prfs_rks, prfs_rks_votes = sample_mallows_profiles(
+            n_v=n_v, n_a=n_a, phi=phi, n_prf=n_prf, norm_mallows=norm_mallows
+        )
 
-            for n_v in n_v_list:
-                prfs_rks, prfs_rks_votes = sample_mallows_profiles(
-                    n_v=n_v, n_a=n_a, phi=phi, n_prf=n_prf, norm_mallows=norm_mallows
-                )
+        # Build Arrow arrays efficiently (no Python .tolist())
+        orders = np.concatenate(prfs_rks, axis=0)  # (rows, n_a)
+        votes = np.concatenate(prfs_rks_votes, axis=0)  # (rows,)
 
-                # Store the dataset
-                profile_idx = [i for i in range(len(prfs_rks)) for _ in prfs_rks[i]]
+        # profile_idx: repeat [0..n_prf-1] by the number of unique rows per profile
+        rows_per_profile = np.fromiter((arr.shape[0] for arr in prfs_rks), dtype=np.int32, count=len(prfs_rks))
+        profile_idx = np.repeat(np.arange(len(prfs_rks), dtype=np.int64), rows_per_profile).astype(np.int64)
 
-                pa_ranking_list.extend(np.concatenate(prfs_rks).tolist())
-                pa_votes_list.extend(np.concatenate(prfs_rks_votes).tolist())
-                pa_profile_idx_list.extend(profile_idx)
-                pa_phi_list.extend([phi] * len(profile_idx))
-                pa_n_a_list.extend([n_a] * len(profile_idx))
-                pa_n_v_list.extend([n_v] * len(profile_idx))
-                pa_norm_mallows_list.extend([norm_mallows] * len(profile_idx))
+        values = pa.array(orders.flatten().astype(np.int64))
+        offsets = pa.array(np.arange(0, (orders.shape[0] + 1) * n_a, n_a, dtype=np.int32))
+        ranking_arr = pa.ListArray.from_arrays(offsets, values, type=pa.list_(pa.int64()))
 
-            table = pa.Table.from_pydict(
-                {
-                    "ranking": pa_ranking_list,
-                    "votes": pa_votes_list,
-                    "profile_idx": pa_profile_idx_list,
-                    "phi": pa_phi_list,
-                    "n_a": pa_n_a_list,
-                    "n_v": pa_n_v_list,
-                    "norm_mallows": pa_norm_mallows_list,
-                }
-            )
+        votes_arr = pa.array(votes.astype(np.int64))
+        profile_idx_arr = pa.array(profile_idx)
+        phi_arr = pa.array(np.full(profile_idx.shape[0], phi, dtype=np.float64))
+        n_a_arr = pa.array(np.full(profile_idx.shape[0], n_a, dtype=np.int64))
+        n_v_arr = pa.array(np.full(profile_idx.shape[0], n_v, dtype=np.int64))
+        norm_arr = pa.array(np.full(profile_idx.shape[0], norm_mallows, dtype=bool))
 
-            # Guardar en Parquet
-            pq.write_to_dataset(
-                table,
-                dir_path,
-                partitioning=get_mallows_data_partitioning(),
-                schema=get_mallows_data_schema(),
-            )
+        table = pa.Table.from_arrays(
+            [ranking_arr, votes_arr, profile_idx_arr, phi_arr, n_a_arr, n_v_arr, norm_arr],
+            names=["ranking", "votes", "profile_idx", "phi", "n_a", "n_v", "norm_mallows"],
+        )
+
+        pq.write_to_dataset(
+            table,
+            dir_path,
+            partitioning=get_mallows_data_partitioning(),
+            schema=get_mallows_data_schema(),
+            compression="zstd",
+            use_dictionary=True,
+            write_statistics=True,
+        )
 
         if verbose > 1:
-            print(f"Finished with Mallows dataset for phi={phi}, n_a={n_a}.\n")
+            print(f"Finished with Mallows dataset for norm_mallows={norm_mallows}, phi={phi}, n_a={n_a}, n_v={n_v}.\n")
 
     init_time = time.time()
 
-    Parallel(n_jobs=-1)(delayed(joblib_mallows_exp)(phi, n_a) for n_a in n_a_list for phi in phi_list)
+    Parallel(n_jobs=-1)(
+        delayed(joblib_mallows_exp)(norm_mallows, phi, n_a, n_v)
+        for norm_mallows in [False, True]
+        for n_a in n_a_list
+        for phi in phi_list
+        for n_v in n_v_list
+    )
 
     total_time = time.time() - init_time
 
@@ -300,7 +298,7 @@ if __name__ == "__main__":
         n_a_list=[i for i in range(3, 17)] + [20, 25, 30],
         n_v_list=[10] + [i for i in range(25, 1001, 25)],
         dir_path=os.getenv("MALLOWS_DATASET_PATH"),
-        fix_same_seed=False,
+        fix_same_seed=True,
     )
 
     print(f"Time taken: {time} seconds.")
