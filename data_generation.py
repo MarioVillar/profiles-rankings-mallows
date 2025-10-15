@@ -20,7 +20,7 @@ def get_mallows_data_schema() -> pa.Schema:
     """
     return pa.schema(
         [
-            ("ranking", pa.list_(pa.int64())),
+            ("permutation", pa.list_(pa.int64())),
             ("votes", pa.int64()),
             ("profile_idx", pa.int64()),
             ("phi", pa.float64()),
@@ -245,7 +245,7 @@ def mallows_exp(
 
         values = pa.array(orders.flatten().astype(np.int64))
         offsets = pa.array(np.arange(0, (orders.shape[0] + 1) * n_a, n_a, dtype=np.int32))
-        ranking_arr = pa.ListArray.from_arrays(offsets, values, type=pa.list_(pa.int64()))
+        permutation_arr = pa.ListArray.from_arrays(offsets, values, type=pa.list_(pa.int64()))
 
         votes_arr = pa.array(votes.astype(np.int64))
         profile_idx_arr = pa.array(profile_idx)
@@ -255,8 +255,8 @@ def mallows_exp(
         norm_arr = pa.array(np.full(profile_idx.shape[0], norm_mallows, dtype=bool))
 
         table = pa.Table.from_arrays(
-            [ranking_arr, votes_arr, profile_idx_arr, phi_arr, n_a_arr, n_v_arr, norm_arr],
-            names=["ranking", "votes", "profile_idx", "phi", "n_a", "n_v", "norm_mallows"],
+            [permutation_arr, votes_arr, profile_idx_arr, phi_arr, n_a_arr, n_v_arr, norm_arr],
+            names=["permutation", "votes", "profile_idx", "phi", "n_a", "n_v", "norm_mallows"],
         )
 
         pq.write_to_dataset(
