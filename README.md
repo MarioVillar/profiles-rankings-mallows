@@ -2,7 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15315407.svg)](https://doi.org/10.5281/zenodo.15315407)
 
-This repository contains the code used to generate the dataset .
+This repository contains the code used to generate the dataset.
 
 This dataset contains profiles of rankings sampled using the Mallows model (Mallows, 1957), through the Repeated Insertion Model (Doignon et al, 2004). Profiles with different characteristics are included. For every combination of the following parameters, there are 1000 profiles:
 
@@ -27,14 +27,15 @@ Since there is a lack of agreement in the literature regarding the notation of t
 If you use this dataset, please cite the Zenodo entry:
 
 ```bibtex
-@dataset{mario_villar_2025_15315407,
-  author    = {Mario Villar and Rico, Noelia and Díaz, Irene},
-  title     = {Profiles of rankings by the Mallows model},
-  month     = may,
-  year      = 2025,
-  publisher = {Zenodo},
-  doi       = {10.5281/zenodo.15315407},
-  url       = {https://doi.org/10.5281/zenodo.15315407},
+@dataset{mario_villar_2025_17358183,
+  author       = {Mario Villar and Rico, Noelia and Díaz, Irene},
+  title        = {Profiles of rankings by the Mallows model},
+  month        = oct,
+  year         = 2025,
+  publisher    = {Zenodo},
+  version      = {2.0.0},
+  doi          = {10.5281/zenodo.17358183},
+  url          = {https://doi.org/10.5281/zenodo.17358183},
 }
 ```
 
