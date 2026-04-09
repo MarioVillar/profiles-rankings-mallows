@@ -1,6 +1,6 @@
 # Profiles of rankings by the Mallows model
 
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.15315407.svg)](https://doi.org/10.5281/zenodo.15315407)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17358183.svg)](https://doi.org/10.5281/zenodo.17358183)
 
 This repository contains the code used to generate the dataset.
 
