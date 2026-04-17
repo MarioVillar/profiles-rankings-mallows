@@ -186,6 +186,7 @@ def mallows_exp(
     n_a_list: list,
     n_v_list: list,
     dir_path: str,
+    norm_mallows_list: list = [False, True],
     fix_same_seed: bool = False,
     verbose: int = 0,
 ) -> float:
@@ -276,7 +277,7 @@ def mallows_exp(
 
     Parallel(n_jobs=-1)(
         delayed(joblib_mallows_exp)(norm_mallows, phi, n_a, n_v)
-        for norm_mallows in [False, True]
+        for norm_mallows in norm_mallows_list
         for n_a in n_a_list
         for phi in phi_list
         for n_v in n_v_list
@@ -291,14 +292,25 @@ def mallows_exp(
 
 
 if __name__ == "__main__":
+    from loggers import setup_script_logging
 
-    time = mallows_exp(
-        n_prf=1000,
-        phi_list=[0.1, 0.4, 0.5, 0.6, 0.7, 0.75, 0.80, 0.85, 0.90, 0.95, 1.0],
-        n_a_list=[i for i in range(3, 17)] + [20, 25, 30],
-        n_v_list=[10] + [i for i in range(25, 1001, 25)],
-        dir_path=os.getenv("MALLOWS_DATASET_PATH"),
-        fix_same_seed=True,
-    )
+    errors_logger, warnings_logger, info_logger = setup_script_logging()
 
-    print(f"Time taken: {time} seconds.")
+    info_logger.info("Starting data_generation execution")
+
+    try:
+        time = mallows_exp(
+            n_prf=1000,
+            phi_list=[0.1, 0.4, 0.5, 0.6, 0.7, 0.80, 0.90, 0.95, 0.99, 1.0],
+            n_a_list=[i for i in range(17, 20)],
+            n_v_list=[10] + [i for i in range(25, 1001, 25)],
+            norm_mallows_list=[True],
+            dir_path=os.getenv("MALLOWS_DATASET_PATH"),
+            fix_same_seed=True,
+        )
+
+        info_logger.info(f"Finished data_generation execution (time taken: {time:.3f} seconds).")
+    except Exception:
+        errors_logger.exception("Execution failed")
+        warnings_logger.warning("Execution failed. Full traceback stored in errors.log")
+        raise
